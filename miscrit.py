@@ -23,6 +23,7 @@ class MiscritBotGUI:
         self.search_index = 0
         self.search_thumbnails = []
         self.miscrit_path = tk.StringVar(value=r"D:\\Bot\\Miscrits\\mymiscrit.png")
+        self.rare_miscrit_path = tk.StringVar(value="")
         self.heal_path = tk.StringVar(value=r"D:\\Bot\\UI\\heal.png")
         self.yes_path = tk.StringVar(value=r"D:\\Bot\\UI\\yes.png")
         self.battle_complete_path = r"D:\\Bot\\UI\\continue.png"
@@ -35,7 +36,7 @@ class MiscritBotGUI:
         button_opts = {"bg": "#3e3e3e", "fg": "white", "activebackground": "#5e5e5e", "bd": 0, "font": ("Segoe UI", 10)}
 
         self.log_area = scrolledtext.ScrolledText(self.root, height=10, width=60, state='disabled', bg="#121212", fg="white", insertbackground="white")
-        self.log_area.grid(row=6, column=0, columnspan=4, pady=10, padx=10)
+        self.log_area.grid(row=7, column=0, columnspan=4, pady=10, padx=10)
 
         self.create_image_selector("Attack Button", self.attack_path, 0, style_opts, button_opts)
 
@@ -46,9 +47,10 @@ class MiscritBotGUI:
         self.search_preview_frame.grid(row=2, column=0, columnspan=4, pady=5)
 
         self.create_image_selector("My Miscrit", self.miscrit_path, 3, style_opts, button_opts)
+        self.create_image_selector("Rare Miscrit", self.rare_miscrit_path, 4, style_opts, button_opts)
 
-        tk.Button(self.root, text="Start Bot", command=self.start_bot, **button_opts).grid(row=4, column=1, pady=5)
-        tk.Button(self.root, text="Stop Bot", command=self.stop_bot, **button_opts).grid(row=4, column=2, pady=5)
+        tk.Button(self.root, text="Start Bot", command=self.start_bot, **button_opts).grid(row=5, column=1, pady=5)
+        tk.Button(self.root, text="Stop Bot", command=self.stop_bot, **button_opts).grid(row=5, column=2, pady=5)
 
     def create_image_selector(self, label, path_var, row, style_opts, button_opts):
         tk.Label(self.root, text=label + ":", **style_opts).grid(row=row, column=1, sticky='w')
@@ -130,8 +132,18 @@ class MiscritBotGUI:
                 self.log(f"Error checking keyboard input: {e}")
 
             try:
+                if self.rare_miscrit_path.get():
+                    rare_loc = pyautogui.locateOnScreen(self.rare_miscrit_path.get(), confidence=0.85)
+                    if rare_loc:
+                        self.log("RARE MISCRIT FOUND! Stopping bot to avoid killing it.")
+                        self.running = False
+                        break
+            except Exception as e:
+                self.log(f"Error checking rare miscrit: {e}")
+
+            try:
                 yes_loc = pyautogui.locateOnScreen(self.yes_path.get(), confidence=0.65)
-                if yes_loc is not None:
+                if yes_loc:
                     x, y = pyautogui.center(yes_loc)
                     pyautogui.click(x, y)
                     self.log("Yes button found and clicked")
@@ -142,7 +154,7 @@ class MiscritBotGUI:
                 self.log("More than 60 seconds since last battle, looking for heal button")
                 try:
                     heal_loc = pyautogui.locateOnScreen(self.heal_path.get(), confidence=0.65)
-                    if heal_loc is not None:
+                    if heal_loc:
                         x, y = pyautogui.center(heal_loc)
                         pyautogui.click(x, y)
                         self.log("Heal button found and clicked")
@@ -154,7 +166,7 @@ class MiscritBotGUI:
 
             try:
                 attack_loc = pyautogui.locateOnScreen(self.attack_path.get(), confidence=0.65)
-                if attack_loc is not None:
+                if attack_loc:
                     x, y = pyautogui.center(attack_loc)
                     pyautogui.click(x, y)
                     self.log("Attack button found, clicking")
@@ -165,7 +177,7 @@ class MiscritBotGUI:
 
             try:
                 complete_loc = pyautogui.locateOnScreen(self.battle_complete_path, confidence=0.65)
-                if complete_loc is not None:
+                if complete_loc:
                     x, y = pyautogui.center(complete_loc)
                     pyautogui.click(x, y)
                     self.log("Battle complete, clicking to continue")
@@ -176,7 +188,7 @@ class MiscritBotGUI:
 
             try:
                 miscrit_loc = pyautogui.locateOnScreen(self.miscrit_path.get(), confidence=0.65)
-                if miscrit_loc is not None:
+                if miscrit_loc:
                     self.log("In battle, waiting for attack button")
                     continue
             except Exception as e:
@@ -214,6 +226,8 @@ class MiscritBotGUI:
 
             except Exception as e:
                 self.log(f"Error during bush detection: {e}")
+
+            time.sleep(0.5)
 
 if __name__ == "__main__":
     root = tk.Tk()
