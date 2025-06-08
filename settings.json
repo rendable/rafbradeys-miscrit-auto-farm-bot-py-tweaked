@@ -1,0 +1,17 @@
+{
+  "attack_path": "D:/Bot/Attacks/darkmb.png",
+  "miscrit_path": "D:\\Bot\\Miscrits\\mymiscrit.png",
+  "rare_miscrit_path": "D:/Bot/Miscrits/ppshaedmiscritpng.png",
+  "heal_path": "D:\\Bot\\UI\\heal.png",
+  "yes_path": "D:\\Bot\\UI\\yes.png",
+  "battle_complete_path": "D:\\Bot\\UI\\continue.png",
+  "capture_button_path": "D:\\Bot\\UI\\capture.png",
+  "confirm_capture_path": "D:\\Bot\\UI\\confirm.png",
+  "search_paths": [
+    "D:\\Bot\\searchables\\pp.png"
+  ],
+  "search_cooldown": 2,
+  "rare_attacks": 3,
+  "capture_clicks": 3,
+  "auto_capture": true
+}
