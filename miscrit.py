@@ -1,13 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, scrolledtext, ttk
-from PIL import Image, ImageTk
-import threading
-import pyautogui
-import time
-import keyboard
-import os
-
-import tkinter as tk
+from notify_run import Notify
 from tkinter import filedialog, scrolledtext, ttk
 from PIL import Image, ImageTk
 import threading
@@ -16,6 +8,7 @@ import time
 import keyboard
 import os
 import json
+
 
 SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json")
 print("Current working directory:", os.getcwd())
@@ -75,7 +68,7 @@ class MiscritBotGUI:
             self.save_settings()
 
     def save_settings(self):
-        print("Saving settings...")  # Add this line
+        print("Saving settings...")  
 
         data = {
             "attack_path": self.attack_path.get(),
@@ -111,7 +104,7 @@ class MiscritBotGUI:
         self.search_preview_frame.grid(row=2, column=0, columnspan=4, pady=5)
         self.display_search_previews()
 
-        self.create_image_selector("My Miscrit", self.miscrit_path, 3, style_opts, button_opts)
+        #self.create_image_selector("My Miscrit", self.miscrit_path, 3, style_opts, button_opts)
         self.create_image_selector("Rare Miscrit", self.rare_miscrit_path, 4, style_opts, button_opts)
 
         tk.Label(self.root, text="Search Cooldown (s):", **style_opts).grid(row=5, column=1, sticky='w')
@@ -120,7 +113,7 @@ class MiscritBotGUI:
         tk.Label(self.root, text="Capture Clicks:", **style_opts).grid(row=6, column=1, sticky='w')
         tk.Spinbox(self.root, from_=1, to=5, textvariable=self.capture_clicks_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=6, column=2, sticky='w')
 
-        tk.Label(self.root, text="Rare Miscrit Attacks:", **style_opts).grid(row=7, column=1, sticky='w')
+        tk.Label(self.root, text="ATTACK RARE MISCRIT n Times:", **style_opts).grid(row=7, column=1, sticky='w')
         tk.Spinbox(self.root, from_=1, to=10, textvariable=self.rare_attack_attempts_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=7, column=2, sticky='w')
 
         self.auto_capture_toggle = ttk.Checkbutton(
@@ -294,6 +287,8 @@ class MiscritBotGUI:
                     rare_loc = pyautogui.locateOnScreen(self.rare_miscrit_path.get(), confidence=0.85, grayscale=False)
                     if rare_loc:
                         self.log("Rare miscrit detected - handling...")
+                        notify = Notify()
+                        notify.send("Rare miscrit detected! Attempting Capture Sequence...")
                         if self.handle_rare_miscrit():
                             continue
             except: pass
