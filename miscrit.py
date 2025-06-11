@@ -13,6 +13,10 @@ import json
 SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json")
 print("Current working directory:", os.getcwd())
 
+searchTimes = 1 
+rareMiscritGrayscale = True
+
+
 class MiscritBotGUI:
     def __init__(self, root):
         self.root = root
@@ -34,16 +38,18 @@ class MiscritBotGUI:
         self.yes_path = tk.StringVar()
         self.capture_button_path = tk.StringVar()
         self.confirm_capture_path = tk.StringVar()
+        self.rare_attack_path = tk.StringVar()
+
         self.search_paths = []
         self.search_index = 0
         self.search_thumbnails = []
 
         self.battle_complete_path = ""
 
-        self.load_settings()
+        self.load_settings()  # ✅ safe now
         self.last_battle_CD = 0
         self.setup_ui()
-
+        
     def load_settings(self):
         if os.path.exists(SETTINGS_FILE):
             with open(SETTINGS_FILE, 'r') as f:
@@ -62,6 +68,9 @@ class MiscritBotGUI:
                     self.rare_attack_attempts_var.set(data.get("rare_attacks", 2))
                     self.capture_clicks_var.set(data.get("capture_clicks", 2))
                     self.auto_capture_enabled.set(data.get("auto_capture", False))
+                    self.rare_attack_path.set(data.get("rare_attack_path", ""))
+                    self.wait_for_intervention_enabled = tk.BooleanVar(value=True)
+
                 except json.JSONDecodeError:
                     print("Settings file is corrupted, loading defaults.")
         else:
@@ -83,7 +92,11 @@ class MiscritBotGUI:
             "search_cooldown": self.searchCD_var.get(),
             "rare_attacks": self.rare_attack_attempts_var.get(),
             "capture_clicks": self.capture_clicks_var.get(),
-            "auto_capture": self.auto_capture_enabled.get()
+            "auto_capture": self.auto_capture_enabled.get(),
+            "rare_attack_path": self.rare_attack_path.get(),
+            "wait_for_intervention": self.wait_for_intervention_enabled.get(),
+
+
         }
         with open(SETTINGS_FILE, 'w') as f:
             json.dump(data, f, indent=2)
@@ -92,29 +105,34 @@ class MiscritBotGUI:
         style_opts = {"bg": "#2e2e2e", "fg": "white", "font": ("Segoe UI", 10)}
         button_opts = {"bg": "#3e3e3e", "fg": "white", "activebackground": "#5e5e5e", "bd": 0, "font": ("Segoe UI", 10)}
 
-        self.log_area = scrolledtext.ScrolledText(self.root, height=10, width=60, state='disabled', bg="#121212", fg="white", insertbackground="white")
-        self.log_area.grid(row=11, column=0, columnspan=4, pady=10, padx=10)
+        # Create a frame for controls
+        control_frame = tk.Frame(self.root, bg="#1e1e1e")
+        control_frame.grid(row=0, column=0, padx=10, pady=10)
 
         self.create_image_selector("Attack Button", self.attack_path, 0, style_opts, button_opts)
+        self.create_image_selector("Rare Attack Button", self.rare_attack_path, 1, style_opts, button_opts)
+        self.create_image_selector("Rare Miscrit", self.rare_miscrit_path, 2, style_opts, button_opts)
 
-        tk.Label(self.root, text="Search Objects:", **style_opts).grid(row=1, column=1, sticky='w')
-        tk.Button(self.root, text="Select Images", command=self.select_multiple_search_images, **button_opts).grid(row=1, column=2)
+        tk.Label(self.root, text="Search Objects:", **style_opts).grid(row=3, column=1, sticky='w')
+        tk.Button(self.root, text="Select Images", command=self.select_multiple_search_images, **button_opts).grid(row=3, column=2, sticky='w')
 
         self.search_preview_frame = tk.Frame(self.root, bg="#1e1e1e")
-        self.search_preview_frame.grid(row=2, column=0, columnspan=4, pady=5)
+        self.search_preview_frame.grid(row=4, column=0, columnspan=4, pady=5)
         self.display_search_previews()
 
-        #self.create_image_selector("My Miscrit", self.miscrit_path, 3, style_opts, button_opts)
-        self.create_image_selector("Rare Miscrit", self.rare_miscrit_path, 4, style_opts, button_opts)
-
+        # Spinboxes
         tk.Label(self.root, text="Search Cooldown (s):", **style_opts).grid(row=5, column=1, sticky='w')
-        tk.Spinbox(self.root, from_=1, to=10, textvariable=self.searchCD_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=5, column=2, sticky='w')
+        tk.Spinbox(self.root, from_=1, to=100, textvariable=self.searchCD_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=5, column=2, sticky='w')
 
         tk.Label(self.root, text="Capture Clicks:", **style_opts).grid(row=6, column=1, sticky='w')
-        tk.Spinbox(self.root, from_=1, to=5, textvariable=self.capture_clicks_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=6, column=2, sticky='w')
+        tk.Spinbox(self.root, from_=1, to=50, textvariable=self.capture_clicks_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=6, column=2, sticky='w')
 
-        tk.Label(self.root, text="ATTACK RARE MISCRIT n Times:", **style_opts).grid(row=7, column=1, sticky='w')
-        tk.Spinbox(self.root, from_=1, to=10, textvariable=self.rare_attack_attempts_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=7, column=2, sticky='w')
+        tk.Label(self.root, text="Attack Click Window (1s per x):", **style_opts).grid(row=7, column=1, sticky='w')
+        tk.Spinbox(self.root, from_=1, to=50, textvariable=self.rare_attack_attempts_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=7, column=2, sticky='w')
+
+        # Checkbuttons
+        style = ttk.Style()
+        style.configure('TCheckbutton', background='#2e2e2e', foreground='white')
 
         self.auto_capture_toggle = ttk.Checkbutton(
             self.root,
@@ -123,13 +141,25 @@ class MiscritBotGUI:
             command=self.save_settings,
             style='TCheckbutton'
         )
-        self.auto_capture_toggle.grid(row=8, column=1, columnspan=2, pady=5)
+        self.auto_capture_toggle.grid(row=8, column=2, columnspan=2, pady=5)
 
-        style = ttk.Style()
-        style.configure('TCheckbutton', background='#2e2e2e', foreground='white')
+        self.intervention_toggle = ttk.Checkbutton(
+            self.root,
+            text="Enable Wait for Rare Miscrit Intervention",
+            variable=self.wait_for_intervention_enabled,
+            command=self.save_settings,
+            style='TCheckbutton'
+        )
+        self.intervention_toggle.grid(row=8, column=0, columnspan=2, pady=5)
 
-        tk.Button(self.root, text="Start Bot", command=self.start_bot, **button_opts).grid(row=9, column=0, pady=5)
-        tk.Button(self.root, text="Stop Bot", command=self.stop_bot, **button_opts).grid(row=9, column=3, pady=5)
+        # Bot control buttons
+        tk.Button(self.root, text="Start Bot", command=self.start_bot, **button_opts).grid(row=9, column=0, pady=10)
+        tk.Button(self.root, text="Stop Bot", command=self.stop_bot, **button_opts).grid(row=9, column=3, pady=10)
+
+        # Log area
+        self.log_area = scrolledtext.ScrolledText(self.root, height=10, width=60, state='disabled', bg="#121212", fg="white", insertbackground="white")
+        self.log_area.grid(row=10, column=0, columnspan=4, pady=10, padx=10)
+
 
     def create_image_selector(self, label, path_var, row, style_opts, button_opts):
         def select_callback():
@@ -203,26 +233,45 @@ class MiscritBotGUI:
 
     def handle_rare_miscrit(self):
         try:
-            max_attacks = max(1, self.rare_attack_attempts_var.get())
-
-            if self.attack_count < max_attacks:
+            max_attacks = self.rare_attack_attempts_var.get()
+            
+            # First try rare attack if configured
+            if self.rare_attack_path.get() and os.path.exists(self.rare_attack_path.get()):
                 try:
-                    attack_loc = pyautogui.locateOnScreen(self.attack_path.get(), confidence=0.7, grayscale=False)
+                    attack_loc = pyautogui.locateOnScreen(self.rare_attack_path.get(), confidence=0.7, grayscale=False)
                     if attack_loc:
                         x, y = pyautogui.center(attack_loc)
                         pyautogui.click(x, y)
                         self.attack_count += 1
-                        self.log(f"Attacked rare miscrit ({self.attack_count}/{max_attacks})")
-                        time.sleep(2)
+                        self.log(f"Used rare attack ({self.attack_count}/{max_attacks})")
+                        time.sleep(1)
                         return True
+                except Exception as e:
+                    self.log(f"Error with rare attack: {e}")
+
+            # Fall back to normal attack if allowed
+            if self.attack_count < max_attacks:
+                try:
+                    if self.attack_path.get() and os.path.exists(self.attack_path.get()):
+                        attack_loc = pyautogui.locateOnScreen(self.attack_path.get(), confidence=0.7, grayscale=False)
+                        if attack_loc:
+                            x, y = pyautogui.center(attack_loc)
+                            pyautogui.click(x, y)
+                            self.attack_count += 1
+                            self.log(f"Attacked rare miscrit ({self.attack_count}/{max_attacks})")
+                            time.sleep(8) # Wait for attack animation
+                            return True
                 except Exception as e:
                     self.log(f"Error attacking rare miscrit: {e}")
                 return False
-            else:
-                if self.auto_capture_enabled.get():
-                    self.log(f"Attempting capture after {max_attacks} attacks")
-                    try:
-                        capture_loc = pyautogui.locateOnScreen(self.capture_button_path.get(), confidence=0.7, grayscale=False)
+
+            # If we've reached max attacks, attempt capture if enabled
+            if self.auto_capture_enabled.get():
+                self.log(f"Attempting capture after {max_attacks} attacks")
+                try:
+                    capture_img = self.capture_button_path.get()
+                    if capture_img and os.path.exists(capture_img):
+                        capture_loc = pyautogui.locateOnScreen(capture_img, confidence=0.7, grayscale=False)
                         if capture_loc:
                             x, y = pyautogui.center(capture_loc)
                             for i in range(self.capture_clicks_var.get()):
@@ -233,26 +282,59 @@ class MiscritBotGUI:
                             confirm_start = time.time()
                             while time.time() - confirm_start < 3 and self.running:
                                 try:
-                                    confirm_loc = pyautogui.locateOnScreen(self.confirm_capture_path.get(), confidence=0.7, grayscale=False)
-                                    if confirm_loc:
-                                        x, y = pyautogui.center(confirm_loc)
-                                        pyautogui.click(x, y)
-                                        self.log("Capture confirmed!")
-                                        self.attack_count = 0
-                                        time.sleep(3)
-                                        return True
+                                    confirm_img = self.confirm_capture_path.get()
+                                    if confirm_img and os.path.exists(confirm_img):
+                                        confirm_loc = pyautogui.locateOnScreen(confirm_img, confidence=0.7, grayscale=False)
+                                        if confirm_loc:
+                                            x, y = pyautogui.center(confirm_loc)
+                                            pyautogui.click(x, y)
+                                            self.log("Capture confirmed!")
+                                            self.attack_count = 0
+                                            time.sleep(3)
+                                            return True
                                 except:
                                     pass
                                 time.sleep(0.3)
 
                             self.log("Couldn't find confirm button")
                             return False
-                    except Exception as e:
-                        self.log(f"Error during capture attempt: {e}")
-                return False
+                except Exception as e:
+                    self.log(f"Error during capture attempt: {e}")
+            return False
         except Exception as e:
             self.log(f"Error in rare miscrit handling: {e}")
             return False
+
+    def bot_loop(self):
+        last_battle_time = time.time()
+
+        while self.running:
+            if keyboard.is_pressed('q'):
+                self.stop_bot()
+                break
+
+            try:
+                if self.rare_miscrit_path.get() and os.path.exists(self.rare_miscrit_path.get()):
+                    rare_loc = pyautogui.locateOnScreen(self.rare_miscrit_path.get(), confidence=0.75, grayscale=rareMiscritGrayscale)
+                    if rare_loc:
+                        self.log("Rare miscrit detected - handling...")
+                        notify = Notify()
+                        notify.send("Rare miscrit detected!")
+                        
+                        if self.wait_for_intervention_enabled.get():
+                            self.log("Waiting for user intervention (15 seconds)...")
+                            start_time = time.time()
+                            while time.time() - start_time < 15 and self.running:
+                                remaining = 15 - int(time.time() - start_time)
+                                self.log(f"Waiting for intervention... {remaining}s remaining (press 'q' to stop)")
+                                time.sleep(1)
+                        else:
+                            self.log("Handling rare miscrit automatically")
+                            self.handle_rare_miscrit()
+                            continue
+            except Exception as e:
+                self.log(f"Error in rare detection: {e}")
+
 
     def bot_loop(self):
         last_battle_time = time.time()
@@ -284,13 +366,30 @@ class MiscritBotGUI:
 
             try:
                 if self.rare_miscrit_path.get() and os.path.exists(self.rare_miscrit_path.get()):
-                    rare_loc = pyautogui.locateOnScreen(self.rare_miscrit_path.get(), confidence=0.85, grayscale=False)
+                    rare_loc = pyautogui.locateOnScreen(self.rare_miscrit_path.get(), confidence=0.75, grayscale=False)
                     if rare_loc:
                         self.log("Rare miscrit detected - handling...")
                         notify = Notify()
-                        notify.send("Rare miscrit detected! Attempting Capture Sequence...")
+                        notify.send("Rare miscrit detected! You have 15 seconds to intervene.")
+                        self.log("Rare miscrit detected. Waiting 15 seconds for user intervention...")
+                        
+                        for i in range(15, 0, -1):
+                            if not self.running:
+                                return False
+                            self.log(f"User intervention window: {i}s remaining...")
+                            time.sleep(1)
+
+                    if self.wait_for_intervention_enabled.get():
+                        self.log("Starting infinite loop of safe attacks until user intervenes (press 'q' to stop)...")
+                        while self.running:
+                            if keyboard.is_pressed('q'):
+                                self.stop_bot()
+                                break
+                            self.handle_rare_miscrit()
+                    else:
                         if self.handle_rare_miscrit():
                             continue
+
             except: pass
 
             try:
@@ -328,14 +427,14 @@ class MiscritBotGUI:
                 image_path = self.search_paths[self.search_index]
                 self.search_index = (self.search_index + 1) % len(self.search_paths)
 
-                search_loc = pyautogui.locateOnScreen(image_path, confidence=0.9, grayscale=False)
+                search_loc = pyautogui.locateOnScreen(image_path, confidence=0.8, grayscale=False)
                 if search_loc:
-                    x = search_loc.left + search_loc.width // 2
+                    x = search_loc.left + search_loc.width - 25
                     y = search_loc.top + search_loc.height - 35
                     self.log(f"Found bush at ({x}, {y})")
                     pyautogui.moveTo(x, y)
                     pyautogui.mouseDown()
-                    for i in range(3):
+                    for i in range(searchTimes):
                         pyautogui.mouseUp()
                         time.sleep(0.1)
                         pyautogui.mouseDown()
