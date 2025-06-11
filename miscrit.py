@@ -57,6 +57,13 @@ class MiscritBotGUI:
         self.last_battle_CD = 0
         self.setup_ui()
         
+    def get_absolute_path(self, relative_path):
+        """Convert relative path to absolute path based on script location"""
+        if not relative_path:  # If path is empty
+            return ""
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(base_dir, relative_path)
+        
     def load_settings(self):
         if os.path.exists(SETTINGS_FILE):
             with open(SETTINGS_FILE, 'r') as f:
@@ -80,7 +87,6 @@ class MiscritBotGUI:
                     self.okay_path.set(data.get("okay_path", ""))
                     self.keep_path.set(data.get("keep_path", ""))
 
-                    
                 except json.JSONDecodeError:
                     print("Settings file is corrupted, loading defaults.")
         else:
@@ -107,7 +113,6 @@ class MiscritBotGUI:
             "okay2_path": self.okay2_path.get(),
             "okay_path": self.okay_path.get(),
             "keep_path": self.keep_path.get(),
-
         }
         with open(SETTINGS_FILE, 'w') as f:
             json.dump(data, f, indent=2)
@@ -187,9 +192,18 @@ class MiscritBotGUI:
         def select_callback():
             file_path = filedialog.askopenfilename(filetypes=[("PNG images", "*.png")])
             if file_path:
-                path_var.set(file_path)
+                # Store relative path if the file is in the script directory or subdirectory
+                try:
+                    rel_path = os.path.relpath(file_path, os.path.dirname(os.path.abspath(__file__)))
+                    if not rel_path.startswith('..'):  # Only use relative path if it's within project folder
+                        path_var.set(rel_path)
+                    else:
+                        path_var.set(file_path)
+                except ValueError:
+                    path_var.set(file_path)
+                
                 canvas = getattr(self, f"canvas_{row}")
-                self.update_image_preview(canvas, file_path)
+                self.update_image_preview(canvas, path_var.get())
                 self.save_settings()
 
         tk.Label(self.root, text=label + ":", **style_opts).grid(row=row, column=1, sticky='w')
@@ -204,7 +218,17 @@ class MiscritBotGUI:
     def select_multiple_search_images(self):
         files = filedialog.askopenfilenames(filetypes=[("PNG images", "*.png")])
         if files:
-            self.search_paths = list(files)
+            self.search_paths = []
+            for file_path in files:
+                try:
+                    rel_path = os.path.relpath(file_path, os.path.dirname(os.path.abspath(__file__)))
+                    if not rel_path.startswith('..'):  # Only use relative path if it's within project folder
+                        self.search_paths.append(rel_path)
+                    else:
+                        self.search_paths.append(file_path)
+                except ValueError:
+                    self.search_paths.append(file_path)
+            
             self.search_index = 0
             self.display_search_previews()
             self.save_settings()
@@ -216,8 +240,9 @@ class MiscritBotGUI:
         self.search_thumbnails.clear()
         for img_path in self.search_paths:
             try:
-                if os.path.exists(img_path):
-                    img = Image.open(img_path).resize((50, 50), Image.Resampling.LANCZOS)
+                abs_path = self.get_absolute_path(img_path)
+                if os.path.exists(abs_path):
+                    img = Image.open(abs_path).resize((50, 50), Image.Resampling.LANCZOS)
                     tk_img = ImageTk.PhotoImage(img)
                     label = tk.Label(self.search_preview_frame, image=tk_img, bg="#1e1e1e")
                     label.image = tk_img
@@ -228,8 +253,9 @@ class MiscritBotGUI:
 
     def update_image_preview(self, canvas, image_path):
         try:
-            if os.path.exists(image_path):
-                img = Image.open(image_path).resize((50, 50), Image.Resampling.LANCZOS)
+            abs_path = self.get_absolute_path(image_path)
+            if os.path.exists(abs_path):
+                img = Image.open(abs_path).resize((50, 50), Image.Resampling.LANCZOS)
                 tk_img = ImageTk.PhotoImage(img)
                 canvas.image = tk_img
                 canvas.create_image(0, 0, anchor='nw', image=tk_img)
@@ -261,8 +287,9 @@ class MiscritBotGUI:
         # Perform normal attacks for the specified duration
         if self.attack_count < max_attacks:
             try:
-                if self.attack_path.get() and os.path.exists(self.attack_path.get()):
-                    attack_loc = pyautogui.locateOnScreen(self.attack_path.get(), confidence=0.7, grayscale=False)
+                attack_path = self.get_absolute_path(self.attack_path.get())
+                if attack_path and os.path.exists(attack_path):
+                    attack_loc = pyautogui.locateOnScreen(attack_path, confidence=0.7, grayscale=False)
                     if attack_loc:
                         x, y = pyautogui.center(attack_loc)
                         pyautogui.click(x, y)
@@ -278,7 +305,7 @@ class MiscritBotGUI:
         else:
             self.log("Attack window complete, attempting capture...")
             try:
-                capture_img = self.capture_button_path.get()
+                capture_img = self.get_absolute_path(self.capture_button_path.get())
                 if capture_img and os.path.exists(capture_img):
                     capture_loc = pyautogui.locateOnScreen(capture_img, confidence=0.7, grayscale=False)
                     if capture_loc:
@@ -291,7 +318,7 @@ class MiscritBotGUI:
                         confirm_start = time.time()
                         while time.time() - confirm_start < 3 and self.running:
                             try:
-                                confirm_img = self.confirm_capture_path.get()
+                                confirm_img = self.get_absolute_path(self.confirm_capture_path.get())
                                 if confirm_img and os.path.exists(confirm_img):
                                     confirm_loc = pyautogui.locateOnScreen(confirm_img, confidence=0.7, grayscale=False)
                                     if confirm_loc:
@@ -314,8 +341,9 @@ class MiscritBotGUI:
     def handle_intervention_mode(self):
         """Handle the intervention mode with rare attacks"""
         try:
-            if self.rare_attack_path.get() and os.path.exists(self.rare_attack_path.get()):
-                attack_loc = pyautogui.locateOnScreen(self.rare_attack_path.get(), confidence=0.7, grayscale=False)
+            attack_path = self.get_absolute_path(self.rare_attack_path.get())
+            if attack_path and os.path.exists(attack_path):
+                attack_loc = pyautogui.locateOnScreen(attack_path, confidence=0.7, grayscale=False)
                 if attack_loc:
                     x, y = pyautogui.center(attack_loc)
                     pyautogui.click(x, y)
@@ -335,56 +363,67 @@ class MiscritBotGUI:
                 break
 
             try:
-                yes_loc = pyautogui.locateOnScreen(self.yes_path.get(), confidence=0.65, grayscale=False)
-                if yes_loc:
-                    x, y = pyautogui.center(yes_loc)
-                    pyautogui.click(x, y)
-                    self.log("Yes button found and clicked")
-                    time.sleep(1)
+                yes_path = self.get_absolute_path(self.yes_path.get())
+                if yes_path:
+                    yes_loc = pyautogui.locateOnScreen(yes_path, confidence=0.65, grayscale=False)
+                    if yes_loc:
+                        x, y = pyautogui.center(yes_loc)
+                        pyautogui.click(x, y)
+                        self.log("Yes button found and clicked")
+                        time.sleep(1)
             except: pass
             
             try:
-                okay_loc = pyautogui.locateOnScreen(self.okay_path.get(), confidence=0.65, grayscale=False)
-                if okay_loc:
-                    x, y = pyautogui.center(okay_loc)
-                    pyautogui.click(x, y)
-                    self.log("Okay button found and clicked")
-                    time.sleep(1)
+                okay_path = self.get_absolute_path(self.okay_path.get())
+                if okay_path:
+                    okay_loc = pyautogui.locateOnScreen(okay_path, confidence=0.65, grayscale=False)
+                    if okay_loc:
+                        x, y = pyautogui.center(okay_loc)
+                        pyautogui.click(x, y)
+                        self.log("Okay button found and clicked")
+                        time.sleep(1)
             except: pass
             
             try: 
-                okay2_loc = pyautogui.locateOnScreen(self.okay2_path.get(), confidence=0.65, grayscale=False)
-                if okay2_loc:
-                    x, y = pyautogui.center(okay2_loc)
-                    pyautogui.click(x, y)
-                    self.log("Okay2 button found and clicked")
-                    time.sleep(1)
+                okay2_path = self.get_absolute_path(self.okay2_path.get())
+                if okay2_path:
+                    okay2_loc = pyautogui.locateOnScreen(okay2_path, confidence=0.65, grayscale=False)
+                    if okay2_loc:
+                        x, y = pyautogui.center(okay2_loc)
+                        pyautogui.click(x, y)
+                        self.log("Okay2 button found and clicked")
+                        time.sleep(1)
             except: pass
             
             try:
-                keep_loc = pyautogui.locateOnScreen(self.keep_path.get(), confidence=0.65, grayscale=False)
-                if keep_loc:
-                    x, y = pyautogui.center(keep_loc)
-                    pyautogui.click(x, y)
-                    self.log("Keep button found and clicked")
-                    time.sleep(1)
+                keep_path = self.get_absolute_path(self.keep_path.get())
+                if keep_path:
+                    keep_loc = pyautogui.locateOnScreen(keep_path, confidence=0.65, grayscale=False)
+                    if keep_loc:
+                        x, y = pyautogui.center(keep_loc)
+                        pyautogui.click(x, y)
+                        self.log("Keep button found and clicked")
+                        time.sleep(1)
             except: pass
 
             if time.time() - last_battle_time > 60:
                 try:
-                    heal_loc = pyautogui.locateOnScreen(self.heal_path.get(), confidence=0.65, grayscale=False)
-                    if heal_loc:
-                        x, y = pyautogui.center(heal_loc)
-                        pyautogui.click(x, y)
-                        self.log("Heal button found and clicked")
-                        time.sleep(1)
+                    heal_path = self.get_absolute_path(self.heal_path.get())
+                    if heal_path:
+                        heal_loc = pyautogui.locateOnScreen(heal_path, confidence=0.65, grayscale=False)
+                        if heal_loc:
+                            x, y = pyautogui.center(heal_loc)
+                            pyautogui.click(x, y)
+                            self.log("Heal button found and clicked")
+                            time.sleep(1)
                 except: pass
                 last_battle_time = time.time()
             
 
             try:
-                if self.rare_miscrit_path.get() and os.path.exists(self.rare_miscrit_path.get()):
-                    rare_loc = pyautogui.locateOnScreen(self.rare_miscrit_path.get(), confidence=0.75, grayscale=False)
+                rare_path = self.get_absolute_path(self.rare_miscrit_path.get())
+                if rare_path and os.path.exists(rare_path):
+                    rare_loc = pyautogui.locateOnScreen(rare_path, confidence=0.75, grayscale=False)
                     if rare_loc:
                         self.log("Rare miscrit detected - handling...")
                         notify = Notify()
@@ -410,34 +449,39 @@ class MiscritBotGUI:
                             while self.running and self.handle_auto_capture():
                                 pass
                             self.attack_count = 0  # Reset counter after capture attempt
-            except Exception as e:
-                self.log(f"Error in rare detection: {e}")
-
-            try:
-                attack_loc = pyautogui.locateOnScreen(self.attack_path.get(), confidence=0.65, grayscale=False)
-                if attack_loc:
-                    x, y = pyautogui.center(attack_loc)
-                    pyautogui.click(x, y)
-                    self.log("Attack button clicked")
-                    time.sleep(1.5)
-                    last_battle_time = time.time()
             except: pass
 
             try:
-                complete_loc = pyautogui.locateOnScreen(self.battle_complete_path, confidence=0.65, grayscale=False)
-                if complete_loc:
-                    x, y = pyautogui.center(complete_loc)
-                    pyautogui.click(x, y)
-                    self.log("Battle complete, clicking to continue")
-                    time.sleep(1)
+                attack_path = self.get_absolute_path(self.attack_path.get())
+                if attack_path:
+                    attack_loc = pyautogui.locateOnScreen(attack_path, confidence=0.65, grayscale=False)
+                    if attack_loc:
+                        x, y = pyautogui.center(attack_loc)
+                        pyautogui.click(x, y)
+                        self.log("Attack button clicked")
+                        time.sleep(1.5)
+                        last_battle_time = time.time()
             except: pass
 
             try:
-                miscrit_loc = pyautogui.locateOnScreen(self.miscrit_path.get(), confidence=0.65, grayscale=False)
-                if miscrit_loc:
-                    self.log("In battle, waiting for attack button")
-                    time.sleep(1)
-                    continue
+                complete_path = self.get_absolute_path(self.battle_complete_path)
+                if complete_path:
+                    complete_loc = pyautogui.locateOnScreen(complete_path, confidence=0.65, grayscale=False)
+                    if complete_loc:
+                        x, y = pyautogui.center(complete_loc)
+                        pyautogui.click(x, y)
+                        self.log("Battle complete, clicking to continue")
+                        time.sleep(1)
+            except: pass
+
+            try:
+                miscrit_path = self.get_absolute_path(self.miscrit_path.get())
+                if miscrit_path:
+                    miscrit_loc = pyautogui.locateOnScreen(miscrit_path, confidence=0.65, grayscale=False)
+                    if miscrit_loc:
+                        self.log("In battle, waiting for attack button")
+                        time.sleep(1)
+                        continue
             except: pass
 
             try:
@@ -446,25 +490,27 @@ class MiscritBotGUI:
                     continue
 
                 image_path = self.search_paths[self.search_index]
+                abs_image_path = self.get_absolute_path(image_path)
                 self.search_index = (self.search_index + 1) % len(self.search_paths)
 
-                search_loc = pyautogui.locateOnScreen(image_path, confidence=0.8, grayscale=False)
-                if search_loc:
-                    x = search_loc.left + search_loc.width - 25
-                    y = search_loc.top + search_loc.height - 35
-                    self.log(f"Found bush at ({x}, {y})")
-                    pyautogui.moveTo(x, y)
-                    pyautogui.mouseDown()
-                    for i in range(searchTimes):
-                        pyautogui.mouseUp()
-                        time.sleep(0.1)
+                if abs_image_path:
+                    search_loc = pyautogui.locateOnScreen(abs_image_path, confidence=0.8, grayscale=False)
+                    if search_loc:
+                        x = search_loc.left + search_loc.width - 25
+                        y = search_loc.top + search_loc.height - 35
+                        self.log(f"Found bush at ({x}, {y})")
+                        pyautogui.moveTo(x, y)
                         pyautogui.mouseDown()
-                    pyautogui.mouseUp()
+                        for i in range(searchTimes):
+                            pyautogui.mouseUp()
+                            time.sleep(0.1)
+                            pyautogui.mouseDown()
+                        pyautogui.mouseUp()
 
-                    for i in range(self.searchCD_var.get(), 0, -1):
-                        if not self.running: break
-                        self.log(f"Cooldown: {i} seconds remaining...")
-                        time.sleep(1)
+                        for i in range(self.searchCD_var.get(), 0, -1):
+                            if not self.running: break
+                            self.log(f"Cooldown: {i} seconds remaining...")
+                            time.sleep(1)
             except: pass
             time.sleep(0.5)
 
