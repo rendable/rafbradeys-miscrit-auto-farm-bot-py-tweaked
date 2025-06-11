@@ -11,9 +11,11 @@
     "D:/Bot/Searchables/searchforLightIgnios.png"
   ],
   "search_cooldown": 2,
-  "rare_attacks": 3,
-  "capture_clicks": 3,
-  "auto_capture": true,
+  "rare_attacks": 8,
+  "capture_clicks": 50,
+  "auto_capture_mode": "auto",
   "rare_attack_path": "D:/Bot/Attacks/deepsleep.png",
-  "wait_for_intervention": false
+  "okay2_path": "D:\\Bot\\UI\\okay2.png",
+  "okay_path": "D:\\Bot\\UI\\okay.png",
+  "keep_path": "D:\\Bot\\UI\\keep.png"
 }
