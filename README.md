@@ -1,13 +1,14 @@
 ## Miscrits Auto Bot
 
-A GUI automation bot built to grind EXP efficiently in Miscrits by performing automated actions like attacking enemies and auto-capturing rare Miscrits. It uses image recognition to detect specific UI elements and simulate interactions, allowing continuous farming without manual input.
-
+A simple GUI bot for Miscrits that helps you grind EXP by auto-attacking enemies and capturing rare Miscrits using image recognition—no manual clicking needed.
 ---
 
 ### ⚠️ Warning
 
 This bot relies heavily on image recognition, which may be CPU-intensive on some systems.  
-It is designed to work best with Miscrits running in **windowed mode** and has **not** been fully optimized for **fullscreen mode**. For best results, keep the game window visible and avoid overlapping elements.
+It is designed to work best with Miscrits running in **windowed mode** and has **not** been fully optimized for **fullscreen mode**.  
+
+While I have **not been banned** for using this bot, **using third-party automation tools may still result in a ban**, so use at your own risk.
 
 ---
 
