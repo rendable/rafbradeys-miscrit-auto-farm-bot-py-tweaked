@@ -125,7 +125,7 @@ class MiscritBotGUI:
         control_frame.grid(row=0, column=0, padx=10, pady=10)
 
         self.create_image_selector("Attack Button", self.attack_path, 0, style_opts, button_opts)
-        self.create_image_selector("Rare Attack Button", self.rare_attack_path, 1, style_opts, button_opts)
+        self.create_image_selector("Spam While waiting for user:", self.rare_attack_path, 1, style_opts, button_opts)
         self.create_image_selector("Rare Miscrit", self.rare_miscrit_path, 2, style_opts, button_opts)
 
         tk.Label(self.root, text="Search Objects:", **style_opts).grid(row=3, column=1, sticky='w')
