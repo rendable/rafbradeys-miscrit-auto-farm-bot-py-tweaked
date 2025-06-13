@@ -39,7 +39,7 @@ class MiscritBotGUI:
         self.confirm_capture_path = tk.StringVar()
         self.rare_attack_path = tk.StringVar()
         
-        #constant button paths (not changeable by user)
+        #constant button paths (not changeable by user), if some UI elements changed during an update, you may want to change these.
         # if you want to change these, edit the paths directly in the setting.json file :)
         self.okay2_path = tk.StringVar()
         self.okay_path = tk.StringVar()
@@ -121,7 +121,6 @@ class MiscritBotGUI:
         style_opts = {"bg": "#2e2e2e", "fg": "white", "font": ("Segoe UI", 10)}
         button_opts = {"bg": "#3e3e3e", "fg": "white", "activebackground": "#5e5e5e", "bd": 0, "font": ("Segoe UI", 10)}
 
-        # Create a frame for controls
         control_frame = tk.Frame(self.root, bg="#1e1e1e")
         control_frame.grid(row=0, column=0, padx=10, pady=10)
 

@@ -22,6 +22,13 @@ While I have **not been banned** for using this bot, **using third-party automat
 
 ---
 
+### 📦 Updates as of 13/06/2025
+
+- Added **Auto-Capture** feature that attempts to catch rare Miscrits automatically after attacking.
+- Now uses relatie paths for images, so you can run the bot from any directory without needing to change paths in the code
+
+---
+
 ### 🛠️ Installation & Setup
 
 #### 1. Install Python Dependencies
@@ -48,12 +55,6 @@ notify-run send "NotifyRun is set up!"
 
 Your channel URL (e.g., `https://notify.run/YOUR_CHANNEL_ID`) will be saved automatically.  
 **Make sure to allow notifications on your phone or browser when prompted.**
-
----
-
-### 📦 Updates as of 13/06/2025
-
-- Added **Auto-Capture** feature that attempts to catch rare Miscrits automatically after attacking.
 
 ---
 
