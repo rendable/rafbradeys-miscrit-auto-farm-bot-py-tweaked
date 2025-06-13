@@ -1,6 +1,7 @@
 ## Miscrits Auto Bot
 
-A simple GUI bot for Miscrits that helps you grind EXP by auto-attacking enemies and capturing rare Miscrits using image recognition—no manual clicking needed.
+A simple bot for Miscrits that helps you grind EXP by auto-attacking enemies and capturing rare Miscrits using image recognition.
+
 ---
 
 ### ⚠️ Warning
@@ -96,3 +97,4 @@ Only one image per searchable is supported at the moment, and detection may fail
 - Support for selecting **multiple images** for rare Miscrit detection  
 - Add ability to **edit click positions** for attack and capture
 - Instead of notifyrun, use **Discord Webhook** for notifications
+- Optimize performance for better CPU usage (as of now it can be quite high)
