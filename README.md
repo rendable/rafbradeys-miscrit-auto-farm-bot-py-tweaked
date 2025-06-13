@@ -37,3 +37,23 @@ notify-run send "NotifyRun is set up!"
 Your channel URL (e.g., `https://notify.run/YOUR_CHANNEL_ID`) will be saved automatically.  
 **Make sure to allow notifications on your phone or browser when prompted.**
 
+---
+
+### 📦 Updates
+
+- Added **Auto-Capture** feature that attempts to catch rare Miscrits automatically after attacking.
+
+---
+
+### 📝 TODO
+
+- Option to disable auto-capture after a single attempt to avoid spending platinum  
+- Support for selecting **multiple images** for rare Miscrit detection  
+- Add ability to **edit click positions** for attack and capture  
+
+---
+
+### 🐛 Known Bugs / Errors
+
+- Auto-capture currently attempts a second catch, which may unintentionally spend platinum  
+- Multiple image detection is temporarily broken—only works with **one** rare image selected  
