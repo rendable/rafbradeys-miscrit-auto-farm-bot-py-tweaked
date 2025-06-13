@@ -1,14 +1,14 @@
 {
   "attack_path": "Attacks/zen.png",
   "miscrit_path": "Miscrits/mymiscrit.png",
-  "rare_miscrit_path": "Miscrits\\lightigni.png",
+  "rare_miscrit_path": "Miscrits\\Aquarion.png",
   "heal_path": "UI/heal.png",
   "yes_path": "UI/yes.png",
   "battle_complete_path": "UI/continue.png",
   "capture_button_path": "UI/capture.png",
   "confirm_capture_path": "UI/confirm.png",
   "search_paths": [
-    "Searchables/searchforLightIgnios.png"
+    "Searchables\\searchforAquarion.png"
   ],
   "search_cooldown": 2,
   "rare_attacks": 4,
