@@ -1,43 +1,43 @@
-## Miscrits Auto Farm Bot
+# Miscrits Auto Farm Bot 🧠⚔️
 
-A simple bot for Miscrits that helps you grind EXP by auto-attacking enemies and capturing rare Miscrits using image recognition.
-
----
-
-### ⚠️ Warning
-
-This bot relies heavily on image recognition, which may be CPU-intensive on some systems.  
-It is designed to work best with Miscrits running in **windowed mode** and has **not** been fully optimized for **fullscreen mode**.  
-
-While I have **not been banned** for using this bot, **using third-party automation tools may still result in a ban**, so use at your own risk.
+A Python-based GUI automation bot for **Miscrits** designed to farm EXP automatically, capture rare Miscrits, and interact with the game using image recognition.  
+This tool uses PyAutoGUI and custom image templates to simulate actions like attacking and catching, making grinding effortless.
 
 ---
 
-### 🚀 Features
+## ⚠️ Disclaimer
 
-- Rare Miscrit detection and intervention options
-- Automated attacks on enemies using image recognition
-- Auto-capture functionality with customizable behavior  
-- Phone Notifications via NotifyRun (Only Works locally when connected to the same network)
+This is a third-party automation tool. While I have **not been banned**, using such tools may still violate Miscrits' terms of service and result in penalties.  
+**Use at your own risk.**
 
 ---
 
-### 📦 Updates as of 13/06/2025
+## ✨ Key Features
 
-- Added **Auto-Capture** feature that attempts to catch rare Miscrits automatically after attacking.
-- Now uses relatie paths for images, so you can run the bot from any directory without needing to change paths in the code
+- 🎯 **Rare Miscrit Detection** – Detects rare Miscrits using grayscale image matching
+- 🥊 **Auto Attack** – Repeatedly attacks enemies using configurable image triggers
+- 🎒 **Auto Capture** – Attempts to capture rare Miscrits after attacks
+- 📱 **Phone Notifications** – Sends alerts via NotifyRun when certain events occur
 
 ---
 
-### 🛠️ Installation & Setup
+## 📢 Latest Update – *June 13, 2025*
 
-#### 1. Install Python Dependencies
+- ✅ Auto-capture now functions after attacking
+- ✅ Now uses **relative paths**, so the bot works from any directory
 
-Download and install Python 3.10 or later from [python.org](https://www.python.org/downloads/).
-and install the required dependencies using pip:
+---
+
+## ⚙️ Installation
+
+### Step 1: Install Python and Dependencies
+
+Make sure you have Python 3.10+ installed.  
+Install required packages with:
+
 ```bash
 pip install notify-run pillow pyautogui keyboard
-```
+
 
 #### 2. Optional (NotifyRun Setup for Phone Notifications)
 
