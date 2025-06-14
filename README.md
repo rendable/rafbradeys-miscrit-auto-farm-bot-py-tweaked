@@ -37,7 +37,7 @@ Install required packages with:
 
 ```bash
 pip install notify-run pillow pyautogui keyboard
-
+```
 
 #### 2. Optional (NotifyRun Setup for Phone Notifications)
 
