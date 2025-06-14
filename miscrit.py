@@ -473,7 +473,8 @@ class MiscritBotGUI:
                         time.sleep(1)
             except: pass
 
-            try:
+            #Deprecated code, kept for reference
+            """try:
                 miscrit_path = self.get_absolute_path(self.miscrit_path.get())
                 if miscrit_path:
                     miscrit_loc = pyautogui.locateOnScreen(miscrit_path, confidence=0.65, grayscale=False)
@@ -482,7 +483,7 @@ class MiscritBotGUI:
                         time.sleep(1)
                         continue
             except: pass
-
+            """
             try:
                 if not self.search_paths:
                     time.sleep(1)

@@ -1,4 +1,4 @@
-## Miscrits Auto Bot
+## Miscrits Auto Farm Bot
 
 A simple bot for Miscrits that helps you grind EXP by auto-attacking enemies and capturing rare Miscrits using image recognition.
 
@@ -33,6 +33,8 @@ While I have **not been banned** for using this bot, **using third-party automat
 
 #### 1. Install Python Dependencies
 
+Download and install Python 3.10 or later from [python.org](https://www.python.org/downloads/).
+and install the required dependencies using pip:
 ```bash
 pip install notify-run pillow pyautogui keyboard
 ```

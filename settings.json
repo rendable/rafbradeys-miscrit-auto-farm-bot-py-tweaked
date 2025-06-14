@@ -1,5 +1,5 @@
 {
-  "attack_path": "Attacks/zen.png",
+  "attack_path": "Attacks\\zen.png",
   "miscrit_path": "Miscrits/mymiscrit.png",
   "rare_miscrit_path": "Miscrits\\Aquarion.png",
   "heal_path": "UI/heal.png",
