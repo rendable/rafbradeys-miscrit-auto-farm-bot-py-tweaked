@@ -1,7 +1,6 @@
 # Miscrits Auto Farm Bot 🧠⚔️
 
 A Python-based GUI automation bot for **Miscrits** designed to farm EXP automatically, capture rare Miscrits, and interact with the game using image recognition.  
-This tool uses PyAutoGUI and custom image templates to simulate actions like attacking and catching, making grinding effortless.
 
 ---
 
