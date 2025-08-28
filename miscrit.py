@@ -13,7 +13,7 @@ import json
 SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json")
 print("Current working directory:", os.getcwd())
 
-searchTimes = 1 
+searchTimes = 1
 rareMiscritGrayscale = True
 
 
@@ -22,15 +22,19 @@ class MiscritBotGUI:
         self.root = root
         self.root.title("Miscrit Bot GUI")
         self.root.configure(bg="#1e1e1e")
+        self.root.attributes("-topmost", True)
 
         self.running = False
         self.attack_count = 0
         self.capture_attempts = 0
+        self.rare_attack_last_used = 0
 
         self.searchCD_var = tk.IntVar(value=2)
         self.rare_attack_attempts_var = tk.IntVar(value=2)
         self.capture_clicks_var = tk.IntVar(value=2)
-        self.auto_capture_mode = tk.StringVar(value="none")  # "none", "auto", "intervention"
+        self.auto_capture_mode = tk.StringVar(value="none")
+        self.bot_mode = tk.StringVar(value="run")
+
         self.attack_path = tk.StringVar()
         self.miscrit_path = tk.StringVar()
         self.rare_miscrit_path = tk.StringVar()
@@ -39,8 +43,6 @@ class MiscritBotGUI:
         self.confirm_capture_path = tk.StringVar()
         self.rare_attack_path = tk.StringVar()
         
-        #constant button paths (not changeable by user), if some UI elements changed during an update, you may want to change these.
-        # if you want to change these, edit the paths directly in the setting.json file :)
         self.okay2_path = tk.StringVar()
         self.okay_path = tk.StringVar()
         self.keep_path = tk.StringVar()
@@ -52,6 +54,8 @@ class MiscritBotGUI:
         self.search_thumbnails = []
 
         self.battle_complete_path = ""
+        self.run_path = 'UI/run.png'
+        self.run2_path = 'UI/run2.png'
 
         self.load_settings()
         self.last_battle_CD = 0
@@ -59,7 +63,7 @@ class MiscritBotGUI:
         
     def get_absolute_path(self, relative_path):
         """Convert relative path to absolute path based on script location"""
-        if not relative_path:  # If path is empty
+        if not relative_path:
             return ""
         base_dir = os.path.dirname(os.path.abspath(__file__))
         return os.path.join(base_dir, relative_path)
@@ -82,6 +86,7 @@ class MiscritBotGUI:
                     self.rare_attack_attempts_var.set(data.get("rare_attacks", 2))
                     self.capture_clicks_var.set(data.get("capture_clicks", 2))
                     self.auto_capture_mode.set(data.get("auto_capture_mode", "none"))
+                    self.bot_mode.set(data.get("bot_mode", "run"))
                     self.rare_attack_path.set(data.get("rare_attack_path", ""))
                     self.okay2_path.set(data.get("okay2_path", ""))
                     self.okay_path.set(data.get("okay_path", ""))
@@ -93,8 +98,8 @@ class MiscritBotGUI:
             self.save_settings()
 
     def save_settings(self):
-        print("Saving settings...")  
-
+        print("Saving settings...")
+        
         data = {
             "attack_path": self.attack_path.get(),
             "miscrit_path": self.miscrit_path.get(),
@@ -109,6 +114,7 @@ class MiscritBotGUI:
             "rare_attacks": self.rare_attack_attempts_var.get(),
             "capture_clicks": self.capture_clicks_var.get(),
             "auto_capture_mode": self.auto_capture_mode.get(),
+            "bot_mode": self.bot_mode.get(),
             "rare_attack_path": self.rare_attack_path.get(),
             "okay2_path": self.okay2_path.get(),
             "okay_path": self.okay_path.get(),
@@ -128,29 +134,29 @@ class MiscritBotGUI:
         self.create_image_selector("Spam While waiting for user:", self.rare_attack_path, 1, style_opts, button_opts)
         self.create_image_selector("Rare Miscrit", self.rare_miscrit_path, 2, style_opts, button_opts)
 
-        tk.Label(self.root, text="Search Objects:", **style_opts).grid(row=3, column=1, sticky='w')
-        tk.Button(self.root, text="Select Images", command=self.select_multiple_search_images, **button_opts).grid(row=3, column=2, sticky='w')
+        tk.Label(self.root, text="Search Objects:", **style_opts).grid(row=4, column=1, sticky='w')
+        tk.Button(self.root, text="Select Images", command=self.select_multiple_search_images, **button_opts).grid(row=4, column=2, sticky='w')
 
         self.search_preview_frame = tk.Frame(self.root, bg="#1e1e1e")
-        self.search_preview_frame.grid(row=4, column=0, columnspan=4, pady=5)
+        self.search_preview_frame.grid(row=5, column=0, columnspan=4, pady=5)
         self.display_search_previews()
 
         # Spinboxes
-        tk.Label(self.root, text="Search Cooldown (s):", **style_opts).grid(row=5, column=1, sticky='w')
-        tk.Spinbox(self.root, from_=1, to=100, textvariable=self.searchCD_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=5, column=2, sticky='w')
+        tk.Label(self.root, text="Search Cooldown (s):", **style_opts).grid(row=6, column=1, sticky='w')
+        tk.Spinbox(self.root, from_=1, to=100, textvariable=self.searchCD_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=6, column=2, sticky='w')
 
-        tk.Label(self.root, text="Capture Clicks:", **style_opts).grid(row=6, column=1, sticky='w')
-        tk.Spinbox(self.root, from_=1, to=50, textvariable=self.capture_clicks_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=6, column=2, sticky='w')
+        tk.Label(self.root, text="Capture Clicks:", **style_opts).grid(row=7, column=1, sticky='w')
+        tk.Spinbox(self.root, from_=1, to=50, textvariable=self.capture_clicks_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=7, column=2, sticky='w')
 
-        tk.Label(self.root, text="Attack Click Window (5s per x):", **style_opts).grid(row=7, column=1, sticky='w')
-        tk.Spinbox(self.root, from_=1, to=50, textvariable=self.rare_attack_attempts_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=7, column=2, sticky='w')
+        tk.Label(self.root, text="Attack Click Window (5s per x):", **style_opts).grid(row=8, column=1, sticky='w')
+        tk.Spinbox(self.root, from_=1, to=50, textvariable=self.rare_attack_attempts_var, width=5, bg="#2a2a2a", fg="white", font=("Segoe UI", 10), command=self.save_settings).grid(row=8, column=2, sticky='w')
 
         # Radio buttons for capture modes
         style = ttk.Style()
         style.configure('TRadiobutton', background='#2e2e2e', foreground='white')
 
         self.auto_capture_frame = tk.LabelFrame(self.root, text="Rare Miscrit Handling", bg="#2e2e2e", fg="white")
-        self.auto_capture_frame.grid(row=8, column=0, columnspan=4, pady=5, padx=5, sticky="ew")
+        self.auto_capture_frame.grid(row=9, column=0, columnspan=4, pady=5, padx=5, sticky="ew")
 
         ttk.Radiobutton(
             self.auto_capture_frame,
@@ -178,23 +184,43 @@ class MiscritBotGUI:
             command=self.save_settings,
             style='TRadiobutton'
         ).pack(side='left', padx=5)
+        
+        self.bot_mode_frame = tk.LabelFrame(self.root, text="Bot Mode", bg="#2e2e2e", fg="white")
+        self.bot_mode_frame.grid(row=10, column=0, columnspan=4, pady=5, padx=5, sticky="ew")
+
+        ttk.Radiobutton(
+            self.bot_mode_frame,
+            text="Run Mode",
+            variable=self.bot_mode,
+            value="run",
+            command=self.save_settings,
+            style='TRadiobutton'
+        ).pack(side='left', padx=5)
+        
+        ttk.Radiobutton(
+            self.bot_mode_frame,
+            text="Training Mode",
+            variable=self.bot_mode,
+            value="training",
+            command=self.save_settings,
+            style='TRadiobutton'
+        ).pack(side='left', padx=5)
 
         # Bot control buttons
-        tk.Button(self.root, text="Start Bot", command=self.start_bot, **button_opts).grid(row=9, column=0, pady=10)
-        tk.Button(self.root, text="Stop Bot", command=self.stop_bot, **button_opts).grid(row=9, column=3, pady=10)
+        tk.Button(self.root, text="Start Bot", command=self.start_bot, **button_opts).grid(row=11, column=0, pady=10)
+        tk.Button(self.root, text="Stop Bot", command=self.stop_bot, **button_opts).grid(row=11, column=3, pady=10)
 
         # Log area
         self.log_area = scrolledtext.ScrolledText(self.root, height=10, width=60, state='disabled', bg="#121212", fg="white", insertbackground="white")
-        self.log_area.grid(row=10, column=0, columnspan=4, pady=10, padx=10)
+        self.log_area.grid(row=12, column=0, columnspan=4, pady=10, padx=10)
 
     def create_image_selector(self, label, path_var, row, style_opts, button_opts):
         def select_callback():
             file_path = filedialog.askopenfilename(filetypes=[("PNG images", "*.png")])
             if file_path:
-                # Store relative path if the file is in the script directory or subdirectory
                 try:
                     rel_path = os.path.relpath(file_path, os.path.dirname(os.path.abspath(__file__)))
-                    if not rel_path.startswith('..'):  # Only use relative path if it's within project folder
+                    if not rel_path.startswith('..'):
                         path_var.set(rel_path)
                     else:
                         path_var.set(file_path)
@@ -221,7 +247,7 @@ class MiscritBotGUI:
             for file_path in files:
                 try:
                     rel_path = os.path.relpath(file_path, os.path.dirname(os.path.abspath(__file__)))
-                    if not rel_path.startswith('..'):  # Only use relative path if it's within project folder
+                    if not rel_path.startswith('..'):
                         self.search_paths.append(rel_path)
                     else:
                         self.search_paths.append(file_path)
@@ -274,6 +300,7 @@ class MiscritBotGUI:
             self.capture_attempts = 0
             threading.Thread(target=self.bot_loop, daemon=True).start()
             self.log("Bot started...")
+            self.log(f"Current mode: {self.bot_mode.get()}")
 
     def stop_bot(self):
         self.running = False
@@ -283,7 +310,6 @@ class MiscritBotGUI:
         """Handle the auto-capture sequence using normal attacks"""
         max_attacks = self.rare_attack_attempts_var.get()
         
-        # Perform normal attacks for the specified duration
         if self.attack_count < max_attacks:
             try:
                 attack_path = self.get_absolute_path(self.attack_path.get())
@@ -294,13 +320,12 @@ class MiscritBotGUI:
                         pyautogui.click(x, y)
                         self.attack_count += 1
                         self.log(f"Attacked ({self.attack_count}/{max_attacks})")
-                        time.sleep(5)  # Wait for attack animation
+                        time.sleep(5)
                         return True
             except Exception as e:
                 self.log(f"Error attacking: {e}")
             return False
-        
-        # After attack window, attempt capture
+            
         else:
             self.log("Attack window complete, attempting capture...")
             try:
@@ -347,7 +372,7 @@ class MiscritBotGUI:
                     x, y = pyautogui.center(attack_loc)
                     pyautogui.click(x, y)
                     self.log("Used rare attack (waiting for intervention)")
-                    time.sleep(1)
+                    self.rare_attack_last_used = time.time()
                     return True
         except Exception as e:
             self.log(f"Error with rare attack: {e}")
@@ -355,6 +380,7 @@ class MiscritBotGUI:
 
     def bot_loop(self):
         last_battle_time = time.time()
+        rare_attack_cooldown = 170  # 2 minutes and 50 seconds in seconds
 
         while self.running:
             if keyboard.is_pressed('q'):
@@ -362,47 +388,15 @@ class MiscritBotGUI:
                 break
 
             try:
-                yes_path = self.get_absolute_path(self.yes_path.get())
-                if yes_path:
-                    yes_loc = pyautogui.locateOnScreen(yes_path, confidence=0.65, grayscale=False)
-                    if yes_loc:
-                        x, y = pyautogui.center(yes_loc)
-                        pyautogui.click(x, y)
-                        self.log("Yes button found and clicked")
-                        time.sleep(1)
-            except: pass
-            
-            try:
-                okay_path = self.get_absolute_path(self.okay_path.get())
-                if okay_path:
-                    okay_loc = pyautogui.locateOnScreen(okay_path, confidence=0.65, grayscale=False)
-                    if okay_loc:
-                        x, y = pyautogui.center(okay_loc)
-                        pyautogui.click(x, y)
-                        self.log("Okay button found and clicked")
-                        time.sleep(1)
-            except: pass
-            
-            try: 
-                okay2_path = self.get_absolute_path(self.okay2_path.get())
-                if okay2_path:
-                    okay2_loc = pyautogui.locateOnScreen(okay2_path, confidence=0.65, grayscale=False)
-                    if okay2_loc:
-                        x, y = pyautogui.center(okay2_loc)
-                        pyautogui.click(x, y)
-                        self.log("Okay2 button found and clicked")
-                        time.sleep(1)
-            except: pass
-            
-            try:
-                keep_path = self.get_absolute_path(self.keep_path.get())
-                if keep_path:
-                    keep_loc = pyautogui.locateOnScreen(keep_path, confidence=0.65, grayscale=False)
-                    if keep_loc:
-                        x, y = pyautogui.center(keep_loc)
-                        pyautogui.click(x, y)
-                        self.log("Keep button found and clicked")
-                        time.sleep(1)
+                buttons = [self.yes_path.get(), self.okay_path.get(), self.okay2_path.get(), self.keep_path.get(), 'UI/run2.png']
+                for path_var in buttons:
+                    path = self.get_absolute_path(path_var)
+                    if path and os.path.exists(path):
+                        loc = pyautogui.locateOnScreen(path, confidence=0.65, grayscale=False)
+                        if loc:
+                            pyautogui.click(pyautogui.center(loc))
+                            self.log(f"Constant button found and clicked: {os.path.basename(path)}")
+                            time.sleep(1)
             except: pass
 
             if time.time() - last_battle_time > 60:
@@ -418,50 +412,122 @@ class MiscritBotGUI:
                 except: pass
                 last_battle_time = time.time()
             
-
             try:
                 rare_path = self.get_absolute_path(self.rare_miscrit_path.get())
-                if rare_path and os.path.exists(rare_path):
-                    rare_loc = pyautogui.locateOnScreen(rare_path, confidence=0.75, grayscale=False)
-                    if rare_loc:
-                        self.log("Rare miscrit detected - handling...")
-                        notify = Notify()
-                        notify.send("Rare miscrit detected!")
-                        
-                        if self.auto_capture_mode.get() == "intervention":
-                            self.log("Waiting for user intervention (15 seconds)...")
-                            start_time = time.time()
-                            while time.time() - start_time < 15 and self.running:
-                                remaining = 15 - int(time.time() - start_time)
-                                self.log(f"Waiting for intervention... {remaining}s remaining (press 'q' to stop)")
-                                time.sleep(1)
+                attack_loc = pyautogui.locateOnScreen(self.get_absolute_path(self.attack_path.get()), confidence=0.7)
+                if attack_loc:
+                    if rare_path and os.path.exists(rare_path):
+                        rare_loc = pyautogui.locateOnScreen(rare_path, confidence=0.75, grayscale=False)
+                        if rare_loc:
+                            self.log("Rare miscrit detected - handling...")
+                            notify = Notify()
+                            notify.send("Rare miscrit detected!")
                             
-                            # After waiting, start spamming rare attacks
-                            self.log("Starting safe attack loop until user stops...")
-                            while self.running:
-                                self.handle_intervention_mode()
-                                time.sleep(1)
-                        elif self.auto_capture_mode.get() == "auto":
-                            self.log("Handling rare miscrit with auto-capture")
-                            notify.send("Rare miscrit detected, Auto Capture in 10 seconds!")
-                            time.sleep(10)  # Wait before starting auto capture
-                            while self.running and self.handle_auto_capture():
-                                pass
-                            self.attack_count = 0  # Reset counter after capture attempt
+                            if self.auto_capture_mode.get() == "intervention":
+                                self.log("Waiting for user intervention (15 seconds)...")
+                                start_time = time.time()
+                                while time.time() - start_time < 15 and self.running:
+                                    remaining = 15 - int(time.time() - start_time)
+                                    self.log(f"Waiting for intervention... {remaining}s remaining (press 'q' to stop)")
+                                    time.sleep(1)
+                                
+                                self.log("Starting safe attack loop until user stops...")
+                                while self.running:
+                                    if time.time() - self.rare_attack_last_used >= rare_attack_cooldown:
+                                        self.handle_intervention_mode()
+                                    else:
+                                        remaining_cooldown = rare_attack_cooldown - (time.time() - self.rare_attack_last_used)
+                                        self.log(f"Rare attack on cooldown. {int(remaining_cooldown)}s remaining...")
+                                    time.sleep(1)
+                            elif self.auto_capture_mode.get() == "auto":
+                                self.log("Handling rare miscrit with auto-capture")
+                                notify.send("Rare miscrit detected, Auto Capture in 10 seconds!")
+                                time.sleep(10)
+                                while self.running and self.handle_auto_capture():
+                                    pass
+                                self.attack_count = 0
+                                continue
             except: pass
 
+            in_battle = False
             try:
-                attack_path = self.get_absolute_path(self.attack_path.get())
-                if attack_path:
-                    attack_loc = pyautogui.locateOnScreen(attack_path, confidence=0.65, grayscale=False)
-                    if attack_loc:
-                        x, y = pyautogui.center(attack_loc)
-                        pyautogui.click(x, y)
-                        self.log("Attack button clicked")
-                        time.sleep(1.5)
-                        last_battle_time = time.time()
-            except: pass
+                run_loc = pyautogui.locateOnScreen(self.get_absolute_path(self.run_path), confidence=0.7)
+                attack_loc = pyautogui.locateOnScreen(self.get_absolute_path(self.attack_path.get()), confidence=0.7)
+            except:
+                run_loc = None
+                attack_loc = None
 
+            if run_loc or attack_loc:
+                in_battle = True
+                if self.bot_mode.get() == "run":
+                    if run_loc:
+                        pyautogui.click(pyautogui.center(run_loc))
+                        self.log("Run mode: running from battle.")
+                        
+                        try:
+                            run2_loc = pyautogui.locateOnScreen(self.get_absolute_path(self.run2_path), confidence=0.7)
+                            if run2_loc:
+                                pyautogui.click(pyautogui.center(run2_loc))
+                                self.log("Clicked run2.png to confirm run.")
+                                time.sleep(13) # Wait 13 seconds after confirming run
+                        except: pass
+                    else:
+                        self.log("Run mode: run button not found, but in battle state. Waiting...")
+                    last_battle_time = time.time()
+                    continue
+                
+                elif self.bot_mode.get() == "training":
+                    if attack_loc:
+                        pyautogui.click(pyautogui.center(attack_loc))
+                        self.log("Training mode: attacking miscrit.")
+                        time.sleep(1.5)
+                    else:
+                        self.log("Training mode: attack button not found, but in battle state. Waiting...")
+                    last_battle_time = time.time()
+                    continue
+
+            if not in_battle:
+                search_succeeded = False
+                try:
+                    if not self.search_paths:
+                        time.sleep(1)
+                        continue
+
+                    image_path = self.search_paths[self.search_index]
+                    abs_image_path = self.get_absolute_path(image_path)
+                    self.search_index = (self.search_index + 1) % len(self.search_paths)
+
+                    if abs_image_path:
+                        search_loc = pyautogui.locateOnScreen(abs_image_path, confidence=0.8, grayscale=False)
+                        if search_loc:
+                            x = search_loc.left + search_loc.width - 25
+                            y = search_loc.top + search_loc.height - 35
+                            self.log(f"Found bush at ({x}, {y})")
+                            pyautogui.moveTo(x, y)
+                            pyautogui.mouseDown()
+                            for i in range(searchTimes):
+                                pyautogui.mouseUp()
+                                time.sleep(0.1)
+                                pyautogui.mouseDown()
+                            pyautogui.mouseUp()
+                            
+                            # After clicking, check for a battle to confirm a successful search
+                            time.sleep(1)
+                            run_loc = pyautogui.locateOnScreen(self.get_absolute_path(self.run_path), confidence=0.7)
+                            attack_loc = pyautogui.locateOnScreen(self.get_absolute_path(self.attack_path.get()), confidence=0.7)
+                            if run_loc or attack_loc:
+                                search_succeeded = True
+
+                except Exception as e:
+                    self.log(f"Error during search: {e}")
+            
+                if search_succeeded:
+                    self.log("Successful search led to a battle. Applying cooldown.")
+                    for i in range(self.searchCD_var.get(), 0, -1):
+                        if not self.running: break
+                        self.log(f"Cooldown: {i} seconds remaining...")
+                        time.sleep(1)
+            
             try:
                 complete_path = self.get_absolute_path(self.battle_complete_path)
                 if complete_path:
@@ -473,45 +539,6 @@ class MiscritBotGUI:
                         time.sleep(1)
             except: pass
 
-            #Deprecated code, kept for reference
-            """try:
-                miscrit_path = self.get_absolute_path(self.miscrit_path.get())
-                if miscrit_path:
-                    miscrit_loc = pyautogui.locateOnScreen(miscrit_path, confidence=0.65, grayscale=False)
-                    if miscrit_loc:
-                        self.log("In battle, waiting for attack button")
-                        time.sleep(1)
-                        continue
-            except: pass
-            """
-            try:
-                if not self.search_paths:
-                    time.sleep(1)
-                    continue
-
-                image_path = self.search_paths[self.search_index]
-                abs_image_path = self.get_absolute_path(image_path)
-                self.search_index = (self.search_index + 1) % len(self.search_paths)
-
-                if abs_image_path:
-                    search_loc = pyautogui.locateOnScreen(abs_image_path, confidence=0.8, grayscale=False)
-                    if search_loc:
-                        x = search_loc.left + search_loc.width - 25
-                        y = search_loc.top + search_loc.height - 35
-                        self.log(f"Found bush at ({x}, {y})")
-                        pyautogui.moveTo(x, y)
-                        pyautogui.mouseDown()
-                        for i in range(searchTimes):
-                            pyautogui.mouseUp()
-                            time.sleep(0.1)
-                            pyautogui.mouseDown()
-                        pyautogui.mouseUp()
-
-                        for i in range(self.searchCD_var.get(), 0, -1):
-                            if not self.running: break
-                            self.log(f"Cooldown: {i} seconds remaining...")
-                            time.sleep(1)
-            except: pass
             time.sleep(0.5)
 
 if __name__ == "__main__":
